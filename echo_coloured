@@ -1,0 +1,9 @@
+# echo_coloured file to print output in coloured format
+#!/bin/bash
+clear
+if [ $UID -ne 0 ]
+then
+	echo -e "\e[1;31m You are not a super user. Please run as Super User \e[0m" # outout in red colour
+else 
+	echo -e "\e[1;32m Welcome Super User \e[0m" # outout in green colour
+fi
