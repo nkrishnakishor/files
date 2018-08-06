@@ -1,0 +1,69 @@
+
+# Bulk user creation in RHEL
+#!/bin/bash
+clear
+if [ $UID -ne 0 ]
+then
+	echo -e "This script should be run as \e[1;31m Root \e[0m only"
+	exit 0
+fi
+file1="usernames"
+pass="info@123"
+for data1 in `cat $file1`
+do
+	tmp=$( mktemp temp.XXXXXX )
+	echo -e "Temp file has been created with name $tmp to store temparory data required during this program execution and will be deleted after execution\n"
+	grep $data1 /etc/passwd 1> /dev/null
+	if [ $? -eq 0 ]
+	then
+		echo -e "User named $data1 already exists in database\n"
+	else
+		echo -e "Last line of /etc/password is \n"
+		sed -n '$p' /etc/passwd | tee $tmp
+		sleep 3
+		mkdir -p /folder_path/$data1
+		echo -e "\n"
+		userid=$( gawk -F: '{ print $3 }' $tmp ) 2>> $tmp
+		userid=$( $userid + 1 ) 2>> $tmp
+		shell="/bin/csh"
+		if [ -d /folder_path/$data1 ]
+		then
+			echo "Home Directory already exists for the user $data1"
+			useradd -g staff $data1
+			usermod -d /folder_path/$data1 $data1
+			usermod -s /bin/csh $data1
+ 			usermod -u `echo $userid` $data1 2>> $tmp
+			chown $data1.staff /folder_path/$data1
+			chmod -R 755 /folder_path/$data1
+			echo $data1"@123" | passwd --stdin "$data1" # Here the users password is "username"@123
+			echo -e "User $data1's passwrod has been changed\n"
+			echo  -e "User named $data1 created and below are the details of the user\n"
+			sed -n '$p' /etc/passwd
+			echo -e "Home directory of user $data1 is `ls -ld /folder_path/$data1` \n"
+			sleep 3
+			echo -e "\n"
+		else
+		grep $data1 /etc/passwd 1> /dev/null
+	        if [ $? -eq 0 ]
+		then
+                	echo -e "User named $data1 already exists in database\n"
+        	else
+			useradd -d /folder_path/$data1 -g staff $data1
+			usermod -s /bin/csh $data1
+			usermod -d /folder_path/$data1 $data1
+ 			usermod -u `echo $userid` $data1 2>> $tmp
+			chown $data1.staff /folder_path/$data1
+			chmod -R 755 /folder_path/$data1
+			echo $data1"@123" | passwd --stdin "$data1" #Here the users password is "username"@123
+			echo -e "User $data1's passwrod has been changed\n"
+			echo  -e "User named $data1 created and below are the details of the user\n"
+			sed -n '$p' /etc/passwd
+			echo -e "Home directory of user $data1 is `ls -ld /folder_path/$data1` \n"
+			sleep 3
+			echo -e "\n"
+		fi
+		fi
+	fi
+	rm -rf $tmp
+done
+rm -rf temp.*
