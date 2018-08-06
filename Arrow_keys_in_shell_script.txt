@@ -1,0 +1,23 @@
+#!/bin/bash
+
+IFS= read -d '' -sn1 key
+
+case $key in
+$'\\e') TMOUT=.01
+while read -sn1 _k
+do
+key=$key$_k
+case $_k in
+[A-Za-z^~]) TMOUT=0; break ;;
+esac
+done
+;;
+"") break ;;
+esac
+case $key in
+$'\\e[A') echo UP ;;
+$'\\e[B') echo DOWN ;;
+$'\\e[C') echo RIGHT ;;
+$'\\e[D') echo LEFT ;;
+* printf '%s\\n' "$key"
+esac
