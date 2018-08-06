@@ -1,0 +1,74 @@
+# script to create host file in Nagios with type of OS; in test phase not yet completed fully
+#!/bin/bash +x
+#
+# To create a new host in nagios and add the file to nagios configuration file
+#
+function fparent ()
+{
+		while ($1)
+		do
+			if [[ $option -eq 1 ]] || [[ $option -eq 2 ]] || [$option -eq 3 ]] || [[ $option -eq 4 ]] || [[ $option -eq 5 ]]
+			then
+				exit
+			elif [[ $option -ge 6 ]]
+				echo -e "Please select correct option"
+				read option
+			fi
+		done
+	return option
+}
+clear
+echo -e "Please enter the host name of the server"
+read hname
+echo -e "Please enter the IP address of the server"
+read ipaddr
+echo -e "\t\t\t\t(1) for creating linux host\n\t\t\t\t(2) for creating windows host\n\t\t\t\t(3) for Other options"
+echo -e "\t\t\tPlease enter your choice\n\t\t\t"
+read c1
+n2=1
+touch /root/$hname.cfg	#/usr/local/nagios/etc/objects/$hname.cfg
+if [ $c1 -eq 1 ] 
+then
+	echo -e "#\n# This is a configuration file for the Linux HOST "$hname" created on `date`\n#\ndefine host{\n\tuse\t\t\t$hname-server\t\t\t;This host will inherit all variables that are defined in this $hname-server host template definition\n\thost_name\t\t$hname\t\t\t\n\talias\t\t\t`echo $hname | tr a-z A-Z`\n\taddress\t\t\t$ipaddr\n\t}\n#\n#\n#\n# HOST GROUP DEFINITION\n#\n#\n\n# Define as optional host group for the machines\n\ndefine hostgroup{\n\thostgroup_name\t\t$hname-server\t\t\t;The name of the hostgroup\n\talias\t\t\t$hname-server\t\t\t; Long name of the group\n\tmembers\t\t\tlocalhost\t\t\t;Comma seprated list of hosts that belong to this group\n\t}\n\n# Define a service to "ping" the $hname machine\n\ndefine service{\n\tuse\t\t\t$hname-service\t\t\t; Name of the service template to use\n\thost_name\t\t$hname\n\tservice_description\tPING\n\tcheck_command\t\tcheck_ping!100.0,20%!500.0,60%\n\t}\n\n# Define a service to check the CPU Load on the host $hname\n\ndefine service{\n\tuse\t\t\t$hname-service\t\t\t; Name of the service template to use\n\thost_name\t\t$hname\n\tservice_description\tCPU Load\n\tcheck_command\t\tcheck_nrpe!check_load\n\t}\n\n# Define a service to check the number of users currently logged in\ndefine service{\n\tuse\t\t\\t$hname-service\t\t\t; Name of the service template to use\n\thost_name\t\t$hname\n\tservice_description\tCurrent Users\n\tcheck_command\t\tcheck_nrpe!check_users\n\t}\n\n# Define a service to check the number of processes currently running on the machine $hname\n\ndefine service{\n\tuse\t\t\t$hname-service\t\t\t; Name of the service template to use\n\thost_name\t\t$hname\n\tservice_description\tTotal Processes\n\tcheck_command\t\tcheck_nrpe!check_total_procs\n\t}\n\n# Define a service to check the Swap of the $hname machine\n\ndefine service{\n\tuse\t\t\t$hname-service\t\t\t; Name of the service template to use\n\thost_name\t\t$hname\n\tservice_description\tSwap Usage\n\tcheck_command\tcheck_nrpe!check_swap\n\t}\n\n" > /root/$hname.cfg
+	elif [ $ch -eq 2 ]
+	then
+# sed s/$hname\-server/
+			echo -e "#\n# This is a configuration file for the WINDOWS HOST "$hname" created on `date`\n#\ndefine host{\n\tuse\t\t\t$hname-server\t\t\t; This host will inherit all variables that are defined in this $hname-server host template definition\n\thost_name\t\t$hname\n\talias\t\t\t`echo $hname | tr a-z A-Z`\n\taddress\t\t\t$ipaddr\n\t}\n\n#\n#\n# HOST GROUP DEFINITION\n#\n#\n# Define as optional host group for the machines\n\ndefine hostgroup{\n\thostgroup_name\t\t$hname-server\t\t\t; Name of the host group\n\talias\t\t\t$hname-server\t\t\t;Long name of the group\n\t}\n\n\n#\n#Service Descriptions\n#\n#\n# Define a service to check the Version of NSClient\n#\ndefine service{\n\tuse\t\t\tgeneric-service\n\thost_name\t\t$hname\n\tservice_description\tNSClient++ Version\n\tcheck_command\t\tcheck_nt!CLIENTVERSION\n\t}\n\n# Create a host to monitor the uptime of the server $hname\n#\ndefine service{\n\tuse\t\t\tgeneric-service\n\thost_name\t\t$hname\n\tservice_description\tUP Time\n\tcheck_command\t\tcheck_nt!UPTIME\n\t}\n\n# Define a service to check the CPU Load on the host $hname\n#\ndefine service{\n\tuse\t\t\tgeneric-service\n\thost_name\t\t$hname\n\tservice_description\tCPU LOAD\n\tcheck_command\t\tcheck_nt!CPULOAD!-l 5,80,90\n\t}\n\n# Define a service to check the monitoring memory usage\n\n#\ndefine service{\n\tuse\t\t\tgeneric-service\n\thost_name\t\t$hname\n\tservice_description\tMemory Usage\n\tcheck_command\t\tcheck_nt!MEMUSE!-w 80 -c 90\n\t}\n\n#Define a service to check the C Drive space in the server\n#\n#\ndefine service{\n\tuse\t\t\t$hname-service\t\t\t; Name of the service template to use\n\thost_name\t\t$hname\n\tservice_description\tC Drive Space\n\tcheck_command\t\tcheck_nt!USEDDISKSPACE!-l c -w 80 -c 90\n\t}\n\n# Uncomment the below lines to check the following drive spaces\n#\n#Define a service to check the D Drive space\n#\n#define service{\n#\tuse\t\t\t$hname-service\t\t\t; Name of the service template to use\n#\thost_name\t\t$hname\n#\tservice_description\tD Drive Space\n#\tcheck_command\t\tcheck_nt!USEDDISKSPACE!-l c -w 80 -c 90\n#\t}\n\n# Define a service to check the E Drive space\n\n#define service{\n#\tuse\t\t\t$hname-service\t\t\t; Name of the service template to use\n#\thost_name\t\t$hname\n#\tservice_description\tE Drive Space\n#\tcheck_command\t\tcheck_nt!USEDDISKSPACE!-l -w 80 -c 90\n#\t}\n\n# Define a service to check the F Drive space\n\n#define service{\n#\tuse\t\t\t$hname-service\t\t\t; Name of the service template to use\n#\thost_name\t\t$hname\n#\tservice_description\tF Drive space\n#\tcheck_command\tcheck_nt!USEDDISKSPACE!-l -w 80 -c 90\n#\t}\n\n\n# Define a service to check the G Drive Space\n\n#define service{\n#\tuse\t\t\t$hname-service\t\t\t; Name of the template to use\n#\thost_name\t\t$hname\n#\tservice_description\tG Drive space\n#\tcheck_command\t\tcheck_nt!USEDDISKSPACE!-l -w 80 -c 90\n#\t}\n\n# Define a service to check the H Drive space\n\n#define service{\n#\tuse\t\t\t$hname-service\t\t\t;" > /root/$hname.cfg
+	else
+		echo "\t\t\t\t\nPlease choose from the below selection for creating hosts with basic requirements such as ping and load on the server"
+		echo "Please select \n\t\t\t\t (L) for Linux systems\n\t\t\t\t (W) for Windows systems"
+		read choice
+		ch=`echo $choice | tr a-z A-Z`
+		case $ch in
+		w)
+			echo -e "Please enter the server Host name"
+			read hname
+			echo -e "Please enter the IP address of the server $hname"
+			read ipaddr
+			echo -e "Please choose the from the below networks from where the server belongs to\n\t1) 83.3 VLAN\n\t2) 23.4 VLAN\n\t3) 97.3 VLAN\n\t4) 172.17.10 VLAN\n\t5)91.3 VLAN"
+			read option
+			case $option in 
+			1)
+				parent="83.3 VLAN"
+				;;
+			2)
+				parent="23.4 VLAN"
+				;;
+			3)
+				parent="97.3 VLAN"
+				;;
+			4)
+				parent="17.10.1 VLAN"
+				;;
+			5)
+				parent="91.3 VLAN"
+				;;
+			*)
+				echo -e "Please select correct option"
+
+				;;
+			esac
+			touch /root/$hname.cfg
+			echo -e "#\n#\n#\nThis is configuration file for $hname server created on $date\n#\ndefine host{\n\tuse\t\t\t$hname\t\t\t;This will inherit values from the template $hname\n\thost_name\t\t\t$hname\t\t\t;Server name\n\talias\t\t\t$hname\t\t\t;long listing name for the server\n\taddress\t\t$ipaddr\t\t\t; IP address of the server\n\tparents\t\t\t$parent"
+
+fi
