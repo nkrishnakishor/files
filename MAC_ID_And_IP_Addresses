@@ -1,0 +1,8 @@
+# Powershell script to gather systems IP Addresses and MAC IDs
+$systems = 'host1', 'host2', 'host3'
+foreach ($ip in $systems) {
+    
+    Get-WmiObject -Class Win32_networkadapterconfiguration -Filter "ipenabled= 'True'" -ComputerName $ip |
+    select PSComputerName,@{Name = "IPAddress";Expression = {[regex]$rx = "(\d{1,3}(\.?)){4}"
+    $rx.matches($_.IPAddress).Value}},MACAddress | Export-Csv -Append -Force .\Desktop\windstream_VLAN_Movement.csv
+        }
